@@ -1,79 +1,33 @@
-const checkForOverlap = (otherInterval, currentInterval) => {
-    return (otherInterval[0] == currentInterval[0] && otherInterval[1] == currentInterval[1]) ||
-    (currentInterval[0] < otherInterval[0] && currentInterval[1] < otherInterval[0]) ||
-    (currentInterval[0] > otherInterval[1] && currentInterval[1] > otherInterval[1])
+function mergeArrays(a, b) {
+    return [Math.min(a[0], b[0]), Math.max(a[1], b[1])];
 }
 
-module.exports = function sumIntervals(intervals) {
-    console.log(intervals);
-    intervals = intervals.sort((a, b) => {
-        if (a[0] < b[0]) return -1;
-        if (a[0] > b[0]) return 1;
-        return 0;
-    })
-//   sums interval if array contains only one interval
-    if (intervals.length == 1) return (intervals[0][1] - intervals[0][0]);
-    let lowestInterval = intervals[0];
-    let a = lowestInterval[0];
-    let b = lowestInterval[1];
-    let inSequence = [];
-    let overlap = [];
-    //  check lowest interval against array of intervals
-    //  push to either inSequence, or overlap
-    for (var i = 0; i < intervals.length; i++) {
-        const currentInterval = intervals[i]
-        // loop through intervals
-        // for each interval
-        // check against current interval, for an overlap
-        for (var j = 0; j < intervals.length; j++) {
-            if (j !== i) { // only compare currentInterval with the other items, not with itself
-                const otherInterval = intervals[j]
-                if (checkForOverlap(otherInterval, currentInterval)){
-                    inSequence.push(currentInterval);
-                } else overlap.push(currentInterval);
+function sumRanges(array) {
+    return array.reduce((sum, [one, two]) => (sum + (two - one)), 0);
+}
+
+function checkForOverlap(current, intervalToCompare) {
+    return current[0] <= intervalToCompare[1] && intervalToCompare[0] <= current[1]
+}
+
+function sumIntervals(intervals) {
+    if (intervals.length === 1) return intervals[0][1] - intervals[0][0];
+    intervals = intervals.sort((a, b) => a[0] - b[0]);
+    for (let i = 0; i < intervals.length; i++) {
+        let compareIndex = 0
+        while (compareIndex < intervals.length) {
+            let intervalToCompare = intervals[compareIndex];
+            if (i !== compareIndex && intervals[i] && checkForOverlap(intervals[i], intervalToCompare)) {
+                intervals[i] = mergeArrays(intervals[i], intervalToCompare);
+                // if there was an overlap, remove intervalToCompare from the array because it's now been merged
+                intervals.splice(compareIndex, 1)
+                // because intervalToCompare was removed, go to the next iteration without incrementing compareIndex, as it will already point to the next item in the array
+                continue
             }
+            compareIndex = compareIndex + 1
         }
     }
-    // [
-    //      [ -7, 3 ] ]
-    //      [ 10, 14 ],
-    //      [ 14, 19 ],
-    //      [ 18, 20 ],
-    //   remove duplicates
-    let set = Array.from(new Set(inSequence.map(JSON.stringify)), JSON.parse);
-    let merger = [];
-// if overlap is empty, sum intervals and return
-// if not, flatten, merge lowest/highest into new interval,
-// pass merger into inSequence, and return function with inSequence as the parameter
-    if (overlap.length == 0) {
-        let results = 0;
-        for (interval of set) {
-            let sum = interval[1] - interval[0];
-            results += sum;
-        }
-        return results;
-    }
-    overlap.unshift(lowestInterval)
-    overlap = overlap.flat();
-    merger.push(Math.min(...overlap));
-    merger.push(Math.max(...overlap));
-    inSequence.unshift(merger);
-    return sumIntervals(inSequence);
+    return sumRanges(intervals);
 }
 
-
-const intervals = [ [ 19, 20 ], [ 17, 19 ], [ 10, 14 ], [ 9, 10 ], [ -7, 3 ] ]
-const output = []
-
-// i = 0 - [ [ 19, 20 ] ]
-// i = 1 - [ [ 17, 20 ] ]
-// i = 2 - [ [ 17, 20 ], [ 10, 14 ] ]
-// i = 3 - [ [ 17, 20 ], [ 9, 14 ] ]
-// i = 4 - [ [ 17, 20 ], [ 9, 14 ], [ -7, 3 ] ]
-
-// array reduce
-sum = 0
-sum = 3
-sum = 8
-sum = 18
-
+module.exports = sumIntervals
